@@ -19,7 +19,8 @@ public class FileSystemPointer implements FilePointer {
 	public FileSystemPointer(File target) {
 		try {
 			this.target = target;
-			this.tag = Files.hash(target, Hashing.sha512());
+			byte[] fileBytes = java.nio.file.Files.readAllBytes(target.toPath());
+			this.tag = Hashing.sha512().hashBytes(fileBytes);
 			final String contentType = java.nio.file.Files.probeContentType(target.toPath());
 			this.mediaTypeOrNull = contentType != null ?
 					MediaType.parse(contentType) :
