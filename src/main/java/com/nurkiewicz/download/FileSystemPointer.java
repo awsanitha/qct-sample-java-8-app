@@ -3,10 +3,10 @@ package com.nurkiewicz.download;
 import com.google.common.base.MoreObjects;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
 import com.google.common.net.MediaType;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -19,8 +19,10 @@ public class FileSystemPointer implements FilePointer {
 	public FileSystemPointer(File target) {
 		try {
 			this.target = target;
-			this.tag = Files.hash(target, Hashing.sha512());
-			final String contentType = java.nio.file.Files.probeContentType(target.toPath());
+			// Replace deprecated Guava Files.hash with direct file reading and hashing
+			byte[] fileBytes = Files.readAllBytes(target.toPath());
+			this.tag = Hashing.sha512().hashBytes(fileBytes);
+			final String contentType = Files.probeContentType(target.toPath());
 			this.mediaTypeOrNull = contentType != null ?
 					MediaType.parse(contentType) :
 					null;
