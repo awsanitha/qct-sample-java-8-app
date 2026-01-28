@@ -11,11 +11,11 @@
 
 ### Maven Configuration
 - **Maven Version**: 3.9.12 (verified compatible)
-- **Maven Compiler Plugin**: 3.0 → 3.13.0
+- **Maven Compiler Plugin**: 3.0 → 3.14.0
 - **Compiler Configuration**: Changed from `<source>1.8</source>` and `<target>1.8</target>` to `<release>25</release>`
 
 ### Maven Plugins Added
-- **gmavenplus-plugin**: 3.0.2 (for Groovy 4.x compilation)
+- **gmavenplus-plugin**: 3.0.2 → 4.3.0 (for Groovy 5.x compilation with Java 25 support)
 
 ## Framework and Library Updates
 
@@ -38,9 +38,9 @@
 ### Testing Framework
 | Component | Original Version | Updated Version | Notes |
 |-----------|------------------|-----------------|-------|
-| Groovy | org.codehaus.groovy:groovy-all:2.4.3 | org.apache.groovy:groovy:4.0.23 | Group ID and artifact ID changed |
-| Spock Core | 1.0-groovy-2.4 | 2.3-groovy-4.0 | JUnit 5 Platform compatible |
-| Spock Spring | 1.0-groovy-2.4 | 2.3-groovy-4.0 | Spring Boot 3 integration |
+| Groovy | org.codehaus.groovy:groovy-all:2.4.3 | org.apache.groovy:groovy:5.0.4 | Group ID and artifact ID changed, Java 25 support |
+| Spock Core | 1.0-groovy-2.4 | 2.4-groovy-5.0 | JUnit 5 Platform compatible, Java 25 support |
+| Spock Spring | 1.0-groovy-2.4 | 2.4-groovy-5.0 | Spring Boot 3 integration, Java 25 support |
 
 ## Code Changes
 
@@ -48,6 +48,14 @@
 **File**: `src/main/java/com/nurkiewicz/download/MainApplication.java`
 - **Change**: Replaced `new Integer("1234")` with `Integer.valueOf("1234")`
 - **Reason**: Constructor deprecated in Java 9+, removed in later versions
+
+### Spring 6 API Updates
+**File**: `src/test/java/org/springframework/web/filter/Sha512ShallowEtagHeaderFilter.java`
+- **Change**: Updated `generateETagHeaderValue` method signature to match Spring 6 API
+  - Old signature: `protected String generateETagHeaderValue(byte[] bytes)`
+  - New signature: `protected String generateETagHeaderValue(InputStream contentInputStream, boolean isLastChunk) throws IOException`
+- **Implementation**: Added `ByteStreams.toByteArray()` to read from InputStream
+- **Reason**: Spring Framework 6.x breaking API change in `ShallowEtagHeaderFilter`
 
 ### Test Framework Updates
 **File**: `src/test/groovy/com/nurkiewicz/download/DownloadControllerTest.groovy`
@@ -89,11 +97,12 @@
 - Status: Acceptable (cosmetic warning only)
 
 ### Test Framework
-✅ **Test compilation ready** with:
-- Spock 2.3-groovy-4.0
-- Groovy 4.0.23
+✅ **Tests compile and pass** with:
+- Spock 2.4-groovy-5.0
+- Groovy 5.0.4
 - Spring Boot 3.2.12 test framework
 - JUnit 5 Platform support
+- Java 25 bytecode generation
 
 ## Compatibility Matrix
 
@@ -103,8 +112,8 @@
 | Spring Boot | 1.2.3 | 3.2.12 | ✅ Upgraded |
 | Spring Framework | 4.1.6 | 6.x | ✅ Upgraded |
 | Maven | 3.9.12 | 3.9.12 | ✅ Compatible |
-| Groovy | 2.4.3 | 4.0.23 | ✅ Upgraded |
-| Spock | 1.0 | 2.3 | ✅ Upgraded |
+| Groovy | 2.4.3 | 5.0.4 | ✅ Upgraded |
+| Spock | 1.0 | 2.4 | ✅ Upgraded |
 
 ## Benefits of Upgrade
 
@@ -154,7 +163,7 @@ If issues arise, rollback can be performed by:
 ## Next Steps (Optional Enhancements)
 
 ### Recommended
-1. ✅ Run full test suite (mvn test) to verify all tests pass
+1. ✅ Run full test suite (mvn test) to verify all tests pass - **COMPLETED**
 2. ⚠️ Address Guava deprecation in FileSystemPointer.java (use newer Guava hashing API)
 3. 📝 Update any documentation referencing Java 8 or Spring Boot 1.x
 
