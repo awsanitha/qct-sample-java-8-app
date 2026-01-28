@@ -6,12 +6,11 @@
     <version>0.0.1-SNAPSHOT</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.version>4.1.1.RELEASE</spring.version>
     </properties>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.2.3.RELEASE</version>
+        <version>3.2.12</version>
         <relativePath/>
     </parent>
     <build>
@@ -24,12 +23,24 @@
                     <release>25</release>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compileTests</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <repositories>
         <repository>
             <id>io.spring.repo.maven.milestone</id>
-            <url>http://repo.spring.io/milestone/</url>
+            <url>https://repo.spring.io/milestone/</url>
             <snapshots><enabled>false</enabled></snapshots>
         </repository>
     </repositories>
