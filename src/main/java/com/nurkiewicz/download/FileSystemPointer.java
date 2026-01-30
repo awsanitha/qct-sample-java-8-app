@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
 import com.google.common.net.MediaType;
 
 import java.io.*;
@@ -19,7 +20,7 @@ public class FileSystemPointer implements FilePointer {
 	public FileSystemPointer(File target) {
 		try {
 			this.target = target;
-			this.tag = Files.hash(target, Hashing.sha512());
+			this.tag = com.google.common.io.MoreFiles.asByteSource(target.toPath()).hash(Hashing.sha512());
 			final String contentType = java.nio.file.Files.probeContentType(target.toPath());
 			this.mediaTypeOrNull = contentType != null ?
 					MediaType.parse(contentType) :
