@@ -3,7 +3,7 @@ package com.nurkiewicz.download;
 import com.google.common.base.MoreObjects;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
+import com.google.common.io.ByteSource;
 import com.google.common.net.MediaType;
 
 import java.io.*;
@@ -19,7 +19,9 @@ public class FileSystemPointer implements FilePointer {
 	public FileSystemPointer(File target) {
 		try {
 			this.target = target;
-			this.tag = Files.hash(target, Hashing.sha512());
+			// Replace deprecated Files.hash() with ByteSource approach
+			ByteSource byteSource = com.google.common.io.Files.asByteSource(target);
+			this.tag = byteSource.hash(Hashing.sha512());
 			final String contentType = java.nio.file.Files.probeContentType(target.toPath());
 			this.mediaTypeOrNull = contentType != null ?
 					MediaType.parse(contentType) :
