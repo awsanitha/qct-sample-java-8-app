@@ -2,6 +2,7 @@ package com.bhoruka.bloodbank.service;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import com.bhoruka.bloodbank.TestCampConstants;
@@ -12,16 +13,16 @@ import com.bhoruka.bloodbank.exception.GetCampDetailsFailedException;
 
 import java.util.Optional;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CampServiceTest {
 
     @Mock
@@ -30,14 +31,16 @@ public class CampServiceTest {
     @InjectMocks
     private CampService campService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         campService = new CampService(campDao);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void constructor_nullValue_throwsNullPointerException() {
-        campService = new CampService(null);
+        assertThrows(NullPointerException.class, () -> {
+            campService = new CampService(null);
+        });
     }
 
     @Test
@@ -47,16 +50,20 @@ public class CampServiceTest {
         assertThat(campService.createCamp(TestCampConstants.CREATE_CAMP_REQUEST), is(TestCampConstants.TEST_CAMP_ID));
     }
 
-    @Test(expected = CampCreationFailedException.class)
+    @Test
     public void createCamp_failed_throwsCampCreationFailedException() {
         when(campDao.createCamp(ArgumentMatchers.any())).thenReturn(TestCampConstants.CAMP_MODEL_WITHOUT_ID);
 
-        campService.createCamp(TestCampConstants.CREATE_CAMP_REQUEST);
+        assertThrows(CampCreationFailedException.class, () -> {
+            campService.createCamp(TestCampConstants.CREATE_CAMP_REQUEST);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void createCamp_nullValue_throwsNullPointerException() {
-        campService.createCamp(null);
+        assertThrows(NullPointerException.class, () -> {
+            campService.createCamp(null);
+        });
     }
 
     @Test
@@ -67,15 +74,19 @@ public class CampServiceTest {
         assertThat(campService.getCamp(TestCampConstants.GET_CAMP_REQUEST), is(TestCampConstants.VALID_GET_CAMP_MODEL));
     }
 
-    @Test(expected = GetCampDetailsFailedException.class)
+    @Test
     public void getCamp_failed_throwsGetCampDetailsFailedException() {
         when(campDao.getCamp(ArgumentMatchers.any())).thenReturn(Optional.empty());
 
-        campService.getCamp(TestCampConstants.GET_CAMP_REQUEST);
+        assertThrows(GetCampDetailsFailedException.class, () -> {
+            campService.getCamp(TestCampConstants.GET_CAMP_REQUEST);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void getCamp_nullValue_throwsNullPointerException() {
-        campService.getCamp(null);
+        assertThrows(NullPointerException.class, () -> {
+            campService.getCamp(null);
+        });
     }
 }
