@@ -113,9 +113,11 @@ public class ExistingFile {
 	}
 
 	private MediaType toMediaType(com.google.common.net.MediaType input) {
-		return input.charset()
-				.transform(c -> new MediaType(input.type(), input.subtype(), c))
-				.or(new MediaType(input.type(), input.subtype()));
+		if (input.charset().isPresent()) {
+			return new MediaType(input.type(), input.subtype(), input.charset().get());
+		} else {
+			return new MediaType(input.type(), input.subtype());
+		}
 	}
 
 }
