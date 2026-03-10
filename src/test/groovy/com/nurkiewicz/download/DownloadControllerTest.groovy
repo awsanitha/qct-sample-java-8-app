@@ -1,9 +1,8 @@
 package com.nurkiewicz.download
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -19,8 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
-@WebAppConfiguration
-@ContextConfiguration(classes = [MainApplication])
+@SpringBootTest(classes = [MainApplication], webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @ActiveProfiles("test")
 class DownloadControllerSpec extends Specification {
 
