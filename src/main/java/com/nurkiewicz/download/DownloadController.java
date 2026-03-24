@@ -34,8 +34,8 @@ public class DownloadController {
 	public ResponseEntity<Resource> redirect(
 			HttpMethod method,
 			@PathVariable UUID uuid,
-			@RequestHeader(IF_NONE_MATCH) Optional<String> requestEtagOpt,
-			@RequestHeader(IF_MODIFIED_SINCE) Optional<Date> ifModifiedSinceOpt
+			@RequestHeader(value = IF_NONE_MATCH, required = false) Optional<String> requestEtagOpt,
+			@RequestHeader(value = IF_MODIFIED_SINCE, required = false) Optional<Date> ifModifiedSinceOpt
 			) {
 		return findExistingFile(method, uuid)
 				.map(file -> file.redirect(requestEtagOpt, ifModifiedSinceOpt))
@@ -46,8 +46,8 @@ public class DownloadController {
 	public ResponseEntity<Resource> download(
 			HttpMethod method,
 			@PathVariable UUID uuid,
-			@RequestHeader(IF_NONE_MATCH) Optional<String> requestEtagOpt,
-			@RequestHeader(IF_MODIFIED_SINCE) Optional<Date> ifModifiedSinceOpt
+			@RequestHeader(value = IF_NONE_MATCH, required = false) Optional<String> requestEtagOpt,
+			@RequestHeader(value = IF_MODIFIED_SINCE, required = false) Optional<Date> ifModifiedSinceOpt
 			) {
 		return findExistingFile(method, uuid)
 				.map(file -> file.handle(requestEtagOpt, ifModifiedSinceOpt))
