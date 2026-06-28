@@ -1,12 +1,11 @@
 package com.nurkiewicz.download
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.context.WebApplicationContext
 import spock.lang.Specification
 
 import java.time.Instant
@@ -19,25 +18,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
-@WebAppConfiguration
+@SpringBootTest
+@AutoConfigureMockMvc
 @ContextConfiguration(classes = [MainApplication])
 @ActiveProfiles("test")
 class DownloadControllerSpec extends Specification {
 
-	private MockMvc mockMvc
-
-	private static final String TEXT_FILE = '/download/' + FileExamples.TXT_FILE_UUID + '/file.txt';
+	@Autowired
+	MockMvc mockMvc
 
 	@Autowired
-	public void setWebApplicationContext(WebApplicationContext wac) {
-		mockMvc = MockMvcBuilders.webAppContextSetup(wac).build()
-	}
+	FileStorage fileStorage
+
+	String textFile() { '/download/' + FileExamples.TXT_FILE_UUID + '/file.txt' }
+
+	FilePointer txtFile() { fileStorage.findFile(FileExamples.TXT_FILE_UUID).get() }
 
 	def 'should return bytes of existing file'() {
 		expect:
 			mockMvc
 					.perform(
-						get(TEXT_FILE))
+						get(textFile()))
 					.andExpect(status().isOk())
 					.andExpect(content().string("foobar"))
 	}
@@ -55,7 +56,7 @@ class DownloadControllerSpec extends Specification {
 		expect:
 			mockMvc
 					.perform(
-						get(TEXT_FILE))
+						get(textFile()))
 					.andExpect(
 						status().isOk())
 		}
@@ -64,7 +65,7 @@ class DownloadControllerSpec extends Specification {
 		expect:
 			mockMvc
 					.perform(
-						get(TEXT_FILE)
+						get(textFile())
 								.header(IF_NONE_MATCH, '"WHATEVER"'))
 					.andExpect(
 						status().isOk())
@@ -72,11 +73,11 @@ class DownloadControllerSpec extends Specification {
 
 	def 'should not send file if ETag matches content'() {
 		given:
-			String etag = FileExamples.TXT_FILE.getEtag()
+			String etag = txtFile().getEtag()
 		expect:
 			mockMvc
 					.perform(
-						get(TEXT_FILE)
+						get(textFile())
 								.header(IF_NONE_MATCH, etag))
 					.andExpect(
 						status().isNotModified())
@@ -86,12 +87,12 @@ class DownloadControllerSpec extends Specification {
 
 	def 'should not return file if wasn\'t modified recently'() {
 		given:
-			Instant lastModified = FileExamples.TXT_FILE.getLastModified()
+			Instant lastModified = txtFile().getLastModified()
 			String dateHeader = toDateHeader(lastModified)
 		expect:
 			mockMvc
 					.perform(
-					get(TEXT_FILE)
+					get(textFile())
 							.header(IF_MODIFIED_SINCE, dateHeader))
 					.andExpect(
 							status().isNotModified())
@@ -99,12 +100,12 @@ class DownloadControllerSpec extends Specification {
 
 	def 'should not return file if server has older version than the client'() {
 		given:
-			Instant lastModifiedLaterThanServer = FileExamples.TXT_FILE.getLastModified().plusSeconds(60)
+			Instant lastModifiedLaterThanServer = txtFile().getLastModified().plusSeconds(60)
 			String dateHeader = toDateHeader(lastModifiedLaterThanServer)
 		expect:
 			mockMvc
 					.perform(
-					get(TEXT_FILE)
+					get(textFile())
 							.header(IF_MODIFIED_SINCE, dateHeader))
 					.andExpect(
 							status().isNotModified())
@@ -112,12 +113,12 @@ class DownloadControllerSpec extends Specification {
 
 	def 'should return file if was modified after last retrieval'() {
 		given:
-			Instant lastModifiedRecently = FileExamples.TXT_FILE.getLastModified().minusSeconds(60)
+			Instant lastModifiedRecently = txtFile().getLastModified().minusSeconds(60)
 			String dateHeader = toDateHeader(lastModifiedRecently)
 		expect:
 			mockMvc
 					.perform(
-					get(TEXT_FILE)
+					get(textFile())
 							.header(IF_MODIFIED_SINCE, dateHeader))
 					.andExpect(
 							status().isOk())
@@ -127,7 +128,7 @@ class DownloadControllerSpec extends Specification {
 		expect:
 			mockMvc
 					.perform(
-						head(TEXT_FILE))
+						head(textFile()))
 					.andExpect(
 							status().isOk())
 					.andExpect(
@@ -138,30 +139,30 @@ class DownloadControllerSpec extends Specification {
 		expect:
 			mockMvc
 				.perform(
-					head(TEXT_FILE)
-							.header(IF_NONE_MATCH, FileExamples.TXT_FILE.getEtag()))
+					head(textFile())
+							.header(IF_NONE_MATCH, txtFile().getEtag()))
 				.andExpect(
 					status().isNotModified())
 				.andExpect(
-					header().string(ETAG, FileExamples.TXT_FILE.getEtag()))
+					header().string(ETAG, txtFile().getEtag()))
 	}
 
 	def 'should return Content-length header'() {
 		expect:
 			mockMvc
 					.perform(
-					head(TEXT_FILE))
+					head(textFile()))
 					.andExpect(
 					status().isOk())
 					.andExpect(
-					header().longValue(CONTENT_LENGTH, FileExamples.TXT_FILE.size))
+					header().longValue(CONTENT_LENGTH, txtFile().size))
 	}
 
 	def 'should return content type in response'() {
 		expect:
 			mockMvc
 					.perform(
-					head(TEXT_FILE))
+					head(textFile()))
 					.andExpect(
 					status().isOk())
 					.andExpect(
