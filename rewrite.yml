@@ -1,0 +1,182 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.migrate.MigrateAspectjMavenPlugin
+displayName: Migrate org.codehaus.mojo aspectj-maven-plugin to dev.aspectj
+description: >-
+  Replace the unmaintained org.codehaus.mojo:aspectj-maven-plugin with its drop-in successor
+  dev.aspectj:aspectj-maven-plugin and align the AspectJ runtime/tools. The codehaus plugin
+  resolves com.sun:tools:jar (tools.jar), which was removed in JDK 9+, so any Maven build that
+  binds it to the lifecycle fails with a PluginResolutionException once the toolchain is switched
+  to Java 17/21/25 - even though compilation and the OpenRewrite recipes themselves succeed. The
+  dev.aspectj fork is API/goal/configuration compatible and runs on JDK 9+. The plugin is pinned to
+  1.14.1 and aspectjrt/aspectjtools to 1.9.25: the older 1.13.1 / 1.9.21 pair passes an invalid
+  "-25" argument to AJC and fails to compile on Java 25 ("unrecognized single argument: -25"),
+  whereas 1.14.1 / 1.9.25 compiles cleanly on Java 17, 21 and 25 (and still raises the AspectJ
+  floor for projects that pin the runtime below 1.9.7). This is a Maven-only migration (no-op on
+  Gradle projects and on projects that do not use the plugin), and is target-JDK driven, so it
+  applies to every Java 17/21/25 upgrade regardless of source version.
+tags:
+  - java17
+  - java21
+  - java25
+  - aspectj
+recipeList:
+  - org.openrewrite.maven.ChangePluginGroupIdAndArtifactId:
+      oldGroupId: org.codehaus.mojo
+      oldArtifactId: aspectj-maven-plugin
+      newGroupId: dev.aspectj
+      newArtifactId: aspectj-maven-plugin
+      newVersion: 1.14.1
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.aspectj
+      artifactId: aspectj*
+      newVersion: 1.9.25
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.migrate.UpgradeToJava17
+displayName: Migrate to Java 17
+description: >-
+  Migrate to Java 17. Delegates to the official, validated OpenRewrite recipe
+  org.openrewrite.java.migrate.UpgradeToJava17 (cumulative from Java 8/11) so the recipe list
+  stays correct and current with the resolved rewrite-migrate-java version rather than being a
+  hand-maintained copy that drifts. The official recipe already includes the J2EE dependency
+  additions, deprecated-API replacements, build/plugin upgrades, and the guice/commons-codec/
+  spotbugs/mapstruct/lombok dependency bumps. StringFormatted is appended to preserve prior
+  toolkit behavior (the official recipe does not include it). MigrateAspectjMavenPlugin is
+  appended to fix the org.codehaus.mojo aspectj-maven-plugin tools.jar failure on JDK 9+.
+  ChangePropertyValue bumps the non-standard "java-version" Maven property (common in legacy
+  Spring template poms) to the target. The official recipe only recognises java.version and
+  maven.compiler.*, so a custom java-version stays at its old value and, once source/target are
+  folded into <release>, feeds javac a dotted "--release 1.8" that it rejects on every JDK. It
+  runs only when the property already exists (addIfMissing:false), so it is a no-op elsewhere.
+tags:
+  - java17
+recipeList:
+  - org.openrewrite.maven.ChangePropertyValue:
+      key: java-version
+      newValue: "17"
+      addIfMissing: false
+  - org.openrewrite.java.migrate.UpgradeToJava17
+  - org.openrewrite.java.migrate.lang.StringFormatted:
+      addParentheses: false
+  - com.amazonaws.java.migrate.MigrateAspectjMavenPlugin
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.migrate.UpgradeToJava21
+displayName: Migrate to Java 21
+description: >-
+  Migrate to Java 21. Delegates to the official, validated OpenRewrite recipe
+  org.openrewrite.java.migrate.UpgradeToJava21 (cumulative, chains Java 17). StringFormatted and
+  MigrateAspectjMavenPlugin (org.codehaus.mojo aspectj-maven-plugin tools.jar fix on JDK 9+) are
+  appended to preserve prior toolkit behavior. ChangePropertyValue bumps the non-standard
+  "java-version" Maven property to the target (addIfMissing:false, so a no-op when absent); the
+  official recipe only recognises java.version / maven.compiler.*, leaving a custom java-version
+  stale and feeding javac an invalid dotted "--release" value.
+tags:
+  - java21
+recipeList:
+  - org.openrewrite.maven.ChangePropertyValue:
+      key: java-version
+      newValue: "21"
+      addIfMissing: false
+  - org.openrewrite.java.migrate.UpgradeToJava21
+  - org.openrewrite.java.migrate.lang.StringFormatted:
+      addParentheses: false
+  - com.amazonaws.java.migrate.MigrateAspectjMavenPlugin
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.migrate.UpgradeToJava25
+displayName: Migrate to Java 25
+description: >-
+  Migrate to Java 25. Delegates to the official, validated OpenRewrite recipe
+  org.openrewrite.java.migrate.UpgradeToJava25 (cumulative, chains Java 21). This uses the
+  official UpgradeBuildToJava25 family for build-file updates rather than the older generic
+  UpgradeJavaVersion. StringFormatted, MigrateMainMethodToInstanceMain, and
+  MigrateAspectjMavenPlugin (org.codehaus.mojo aspectj-maven-plugin tools.jar fix on JDK 9+) are
+  appended to preserve prior toolkit behavior (instance main is an optional modernization the
+  official recipe does not apply). ChangePropertyValue bumps the non-standard "java-version"
+  Maven property to the target (addIfMissing:false, so a no-op when absent); the official recipe
+  only recognises java.version / maven.compiler.*, leaving a custom java-version stale and
+  feeding javac an invalid dotted "--release" value.
+tags:
+  - java25
+recipeList:
+  - org.openrewrite.maven.ChangePropertyValue:
+      key: java-version
+      newValue: "25"
+      addIfMissing: false
+  - org.openrewrite.java.migrate.UpgradeToJava25
+  - org.openrewrite.java.migrate.lang.StringFormatted:
+      addParentheses: false
+  - org.openrewrite.java.migrate.lang.MigrateMainMethodToInstanceMain
+  - com.amazonaws.java.migrate.MigrateAspectjMavenPlugin
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.spring.boot2.UpgradeSpringBoot_2_7
+displayName: Migrate to Spring Boot 2.7 (javax, Java 17 baseline)
+description: >-
+  Migrate applications to Spring Boot 2.7.x, which is managed by Spring Framework 5.3.x and
+  stays on the javax namespace. This delegates to the official cumulative recipe
+  UpgradeSpringBoot_2_7, which chains the path up through 2.7 (dependency/property migrations
+  and deprecated-API changes) WITHOUT performing the javax-to-jakarta migration. Spring 5.3
+  bundles an ASM/CGLIB that can verify Java 17 (class file v61) bytecode, so this is the
+  namespace-safe Spring target for a Java 17 upgrade that must remain on javax. It is NOT the
+  default pipeline target and is only valid paired with a Java 17 target.
+tags:
+  - spring
+  - boot
+recipeList:
+  - org.openrewrite.java.spring.boot2.UpgradeSpringBoot_2_7
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.spring.framework.UpgradeSpringFramework_5_3
+displayName: Migrate plain Spring Framework to 5.3 (javax, non-Boot)
+description: >-
+  Upgrade non-Spring-Boot applications to Spring Framework 5.3.x, which supports Java 17
+  (class file v61) bytecode while staying on the javax namespace. Delegates to the official
+  cumulative recipe org.openrewrite.java.spring.framework.UpgradeSpringFramework_5_3, which
+  chains 5.0/5.1/5.2 -> 5.3, bumps org.springframework and org.springframework.security
+  artifacts to 5.3.x, and removes standalone cglib. It does NOT perform the javax-to-jakarta
+  migration, so it is the namespace-safe Spring target for a non-Boot Java 17 upgrade that must
+  remain on javax. Intended for the javax / Java 17 track (springBootTargetVersion=2.7) only;
+  Spring Boot projects use the UpgradeSpringBoot_2_7 recipe instead.
+tags:
+  - spring
+  - framework
+recipeList:
+  - org.openrewrite.java.spring.framework.UpgradeSpringFramework_5_3
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.spring.boot.UpgradeSpringBoot
+displayName: Migrate to the latest stable Spring Boot (3.5)
+description: >-
+  Migrate applications to the latest stable Spring Boot 3.5 release. This delegates to the
+  official, cumulative OpenRewrite recipe UpgradeSpringBoot_3_5, which chains the full path
+  from Spring Boot 2.x through 2.7, 3.0, 3.1, 3.2, 3.3, 3.4 and on to 3.5 - including the
+  Jakarta namespace migration, Spring Framework 6.2, Spring Security 6, Spring Data, Spring
+  Cloud, Spring Kafka, Hibernate 6, springdoc, build-file and plugin updates, and per-version
+  property migrations. Because the official recipe is cumulative and version-aware, we delegate
+  to it rather than re-listing the individual sub-recipes (which would drift out of date).
+tags:
+  - spring
+  - boot
+recipeList:
+  - org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_5
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.amazonaws.java.spring.boot4.UpgradeSpringBoot_4_0
+displayName: Migrate to Spring Boot 4.0 (latest major - opt-in)
+description: >-
+  Migrate applications to Spring Boot 4.0 (community edition). This delegates to the official
+  cumulative recipe UpgradeSpringBoot_4_0, which first lands the app on Spring Boot 3.5, then
+  upgrades to Spring Framework 7.0, Spring Security 7.0, Spring Batch 6.0, Hibernate 7.1,
+  springdoc 3.0, and testcontainers 2.x. NOTE: Spring Boot 4.0 introduces structural breaking
+  changes - modular starters, the spring-boot-starter-web -> spring-boot-starter-webmvc rename,
+  oauth2 starter renames, and AOP starter changes - that frequently require manual follow-up by
+  the Kiro CLI. See migration-knowledge/java/19-spring-boot-latest-migration.md. This recipe is
+  OPT-IN and is not the default pipeline target. Requires rewrite-spring 6.33.0 or newer.
+tags:
+  - spring
+  - boot
+recipeList:
+  - org.openrewrite.java.spring.boot4.UpgradeSpringBoot_4_0
