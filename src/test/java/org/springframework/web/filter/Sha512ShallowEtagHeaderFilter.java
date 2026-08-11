@@ -3,11 +3,19 @@ package org.springframework.web.filter;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 public class Sha512ShallowEtagHeaderFilter extends ShallowEtagHeaderFilter {
 
 	@Override
-	protected String generateETagHeaderValue(byte[] bytes) {
-		final HashCode hash = Hashing.sha512().hashBytes(bytes);
-		return "\"" + hash + "\"";
+	protected String generateETagHeaderValue(InputStream inputStream, boolean isWeak) throws IOException {
+		final HashCode hash = Hashing.sha512().hashBytes(inputStream.readAllBytes());
+		StringBuilder builder = new StringBuilder();
+		if (isWeak) {
+			builder.append("W/");
+		}
+		builder.append("\"").append(hash).append("\"");
+		return builder.toString();
 	}
 }
