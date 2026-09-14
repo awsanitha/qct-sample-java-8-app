@@ -24,12 +24,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class DownloadControllerSpec extends Specification {
 
-	private MockMvc mockMvc
+	@Autowired
+	WebApplicationContext wac
+
+	MockMvc mockMvc
 
 	private static final String TEXT_FILE = '/download/' + FileExamples.TXT_FILE_UUID + '/file.txt';
 
-	@Autowired
-	public void setWebApplicationContext(WebApplicationContext wac) {
+	def setup() {
 		mockMvc = MockMvcBuilders.webAppContextSetup(wac).build()
 	}
 
