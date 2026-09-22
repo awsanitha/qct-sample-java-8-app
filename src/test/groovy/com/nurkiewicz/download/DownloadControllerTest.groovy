@@ -14,7 +14,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import static com.google.common.net.HttpHeaders.*
+import static org.springframework.http.HttpHeaders.*
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.head
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*

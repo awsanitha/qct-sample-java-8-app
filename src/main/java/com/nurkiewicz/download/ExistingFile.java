@@ -114,8 +114,9 @@ public class ExistingFile {
 
 	private MediaType toMediaType(com.google.common.net.MediaType input) {
 		return input.charset()
-				.transform(c -> new MediaType(input.type(), input.subtype(), c))
-				.or(new MediaType(input.type(), input.subtype()));
+				.toJavaUtil()
+				.map(c -> new MediaType(input.type(), input.subtype(), c))
+				.orElseGet(() -> new MediaType(input.type(), input.subtype()));
 	}
 
 }
